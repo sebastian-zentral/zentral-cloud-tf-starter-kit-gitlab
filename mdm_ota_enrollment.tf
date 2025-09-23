@@ -2,15 +2,15 @@ data "zentral_mdm_push_certificate" "zentral-cloud" {
   name = "Zentral Cloud"
 }
 
-data "zentral_mdm_scep_config" "zentral-mdm" {
-  name = "Zentral MDM"
+data "zentral_mdm_scep_issuer" "zentral-cloud" {
+  name = "Zentral Cloud"
 }
 
 resource "zentral_mdm_ota_enrollment" "default" {
   name                  = "Default"
-  display_name          = "Zentral MDM"
+  display_name          = "Zentral Cloud"
   blueprint_id          = zentral_mdm_blueprint.default.id
   push_certificate_id   = data.zentral_mdm_push_certificate.zentral-cloud.id
-  scep_config_id        = data.zentral_mdm_scep_config.zentral-mdm.id
+  scep_issuer_id        = data.zentral_mdm_scep_issuer.zentral-cloud.id
   meta_business_unit_id = zentral_meta_business_unit.default.id
 }

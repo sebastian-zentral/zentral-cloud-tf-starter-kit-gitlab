@@ -1,7 +1,8 @@
 terraform {
   required_providers {
     zentral = {
-      source = "zentralopensource/zentral"
+      source  = "zentralopensource/zentral"
+      version = ">= 0.1.60"
     }
   }
 
