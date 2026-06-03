@@ -10,10 +10,17 @@ resource "zentral_monolith_enrollment" "default" {
   meta_business_unit_id = zentral_meta_business_unit.default.id
 }
 
+# repository
+
+data "zentral_monolith_repository" "default" {
+  name = "Zentral Cloud"
+}
+
 # catalog
 
 data "zentral_monolith_catalog" "production" {
-  name = "production"
+  repository_id = data.zentral_monolith_repository.default.id
+  name          = "production"
 }
 
 resource "zentral_monolith_manifest_catalog" "default-production" {
