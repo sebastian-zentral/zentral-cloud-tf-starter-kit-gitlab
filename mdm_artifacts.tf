@@ -48,13 +48,17 @@ resource "zentral_mdm_artifact" "bootstrap-pkg" {
   requires                       = [zentral_mdm_artifact.monolith-default-enrollment.id]
 }
 
-resource "zentral_mdm_enterprise_app" "bootstrap-pkg-2024-001" {
-  artifact_id    = zentral_mdm_artifact.bootstrap-pkg.id
-  package_uri    = "s3://zentral-pro-services-artifacts-eu-central-1/saas-public/bootstrap-2024.007.pkg"
-  package_sha256 = "18b128e6e900ed42624ea9f574f7af8f3df8c6c8d0263981d6fee639c95b73f4"
-  macos          = true
-  version        = 1
-}
+# Enterprise app version disabled for the lab run: package_uri is an S3 object the
+# dev instance can't reach (the server tries the EC2 metadata service for AWS creds
+# and times out). Re-add once the .pkg is reachable from this Zentral instance.
+#
+# resource "zentral_mdm_enterprise_app" "bootstrap-pkg-2024-001" {
+#   artifact_id    = zentral_mdm_artifact.bootstrap-pkg.id
+#   package_uri    = "s3://zentral-pro-services-artifacts-eu-central-1/saas-public/bootstrap-2024.007.pkg"
+#   package_sha256 = "18b128e6e900ed42624ea9f574f7af8f3df8c6c8d0263981d6fee639c95b73f4"
+#   macos          = true
+#   version        = 1
+# }
 
 # All
 

@@ -10,23 +10,9 @@ resource "zentral_monolith_enrollment" "default" {
   meta_business_unit_id = zentral_meta_business_unit.default.id
 }
 
-# repository
-
-data "zentral_monolith_repository" "default" {
-  name = "Zentral Cloud"
-}
-
-# catalog
-
-data "zentral_monolith_catalog" "production" {
-  repository_id = data.zentral_monolith_repository.default.id
-  name          = "production"
-}
-
-resource "zentral_monolith_manifest_catalog" "default-production" {
-  manifest_id = zentral_monolith_manifest.default.id
-  catalog_id  = data.zentral_monolith_catalog.production.id
-}
+# repository / catalog / manifest-catalog removed for the initial lab run:
+# they require a monolith repository named "Zentral Cloud" with a synced
+# "production" catalog. Re-add once the repository + catalog exist.
 
 # enrollment packages
 
