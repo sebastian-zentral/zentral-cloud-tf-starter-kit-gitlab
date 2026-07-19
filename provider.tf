@@ -6,7 +6,14 @@ terraform {
     }
   }
 
-  // BACKEND PLACEHOLDER
+  // Zentral as the Terraform HTTP state backend. A backend block cannot use
+  // variables, so address/lock_address/unlock_address + username/password are
+  // supplied at `terraform init` time via -backend-config (see .gitlab-ci.yml).
+  // The state object (slug "starter-kit") is auto-created on the first push.
+  backend "http" {
+    lock_method   = "POST"
+    unlock_method = "DELETE"
+  }
 }
 
 // configure the provider

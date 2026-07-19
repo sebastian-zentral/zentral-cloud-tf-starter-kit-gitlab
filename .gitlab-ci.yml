@@ -1,0 +1,65 @@
+stages: [validate, plan, apply]
+
+variables:
+  TF_ROOT: ${CI_PROJECT_DIR}
+  TF_IN_AUTOMATION: "true"
+
+# Every job:
+#  - requests a GitLab OIDC ID token (JWT),
+#  - exchanges it at Zentral's OIDC token issuer for a short-lived API token,
+#  - inits the backend + provider with that token.
+# No long-lived ZTL_API_TOKEN is stored — this is workload-identity federation.
+default:
+  image:
+    name: hashicorp/terraform:1.15   # or an OpenTofu image; pin it
+    entrypoint: [""]
+  id_tokens:
+    ZTL_ID_TOKEN:
+      # Must equal the `audience` configured on the Zentral OIDC token issuer.
+      aud: https://${TF_VAR_fqdn}
+  before_script:
+    - cd "$TF_ROOT"
+    - apk add --no-cache curl jq >/dev/null
+    # Exchange the GitLab JWT for a short-lived Zentral API token (.secret).
+    - |
+      export ZTL_API_TOKEN=$(curl -sS -X POST \
+        -H 'Content-Type: application/json' \
+        -d "{\"jwt\": \"${ZTL_ID_TOKEN}\", \"name\": \"GitLab CI\", \"validity\": 600}" \
+        "https://${TF_VAR_fqdn}/api/accounts/token_issuers/oidc/${ZTL_OIDC_ISSUER_ID}/auth/" \
+        | jq -er .secret)
+    # provider reads TF_VAR_api_token; backend basic-auth reuses the same token.
+    - export TF_VAR_api_token="$ZTL_API_TOKEN"
+    # Backend blocks can't use variables, so the addresses are passed here.
+    - terraform init -input=false
+        -backend-config="address=https://${TF_VAR_fqdn}/api/terraform/backend/starter-kit/"
+        -backend-config="lock_address=https://${TF_VAR_fqdn}/api/terraform/backend/starter-kit/lock/"
+        -backend-config="unlock_address=https://${TF_VAR_fqdn}/api/terraform/backend/starter-kit/lock/"
+        -backend-config="username=$ZTL_USERNAME"
+        -backend-config="password=$ZTL_API_TOKEN"
+
+validate:
+  stage: validate
+  script:
+    - terraform fmt -check -recursive
+    - terraform validate
+
+plan:
+  stage: plan
+  script:
+    - terraform plan -input=false -out=plan.tfplan
+  artifacts:
+    paths: [plan.tfplan]
+    expire_in: 1 week
+
+apply:
+  stage: apply
+  needs: [plan]
+  dependencies: [plan]
+  script:
+    - terraform apply -input=false plan.tfplan
+  environment:
+    name: zentral-dev
+  rules:
+    # default branch only, manual click — never auto-apply from a push
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
